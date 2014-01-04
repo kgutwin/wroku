@@ -8,72 +8,80 @@ Window *remote_window;
 TextLayer *remote_text_grid[3][3];
 TextLayer *header_text_layer;
 
-const RemoteButtonAction nav_page[3][3] = {
+RemoteButtonAction nav_page[3][3] = {
 	{ { "Up", REMOTE_UP }, { "OK ", REMOTE_SELECT }, { "Down", REMOTE_DOWN } },
 	{ { "Left", REMOTE_LEFT }, { "Back", REMOTE_BACK }, { "Right", REMOTE_RIGHT } },
 	{ { " Apps", WROKU_APPS }, { "Home", REMOTE_HOME }, { "Playbk", WROKU_PLAYBACK } }
 };
 
-const RemoteButtonAction playback_page[3][3] = {
+RemoteButtonAction playback_page[3][3] = {
 	{ { "Rev", REMOTE_REV }, { "Play ", REMOTE_PLAY }, { "Fwd", REMOTE_FWD } },
 	{ { "Replay", REMOTE_INSTANTREPLAY }, { "Info", REMOTE_INFO }, { "", 0 } },
 	{ { " Apps", WROKU_APPS }, { "Home", REMOTE_HOME }, { "Playbk", WROKU_PLAYBACK } }
 };
 
-RemoteButtonAction current_page[3][3];
+RemoteButtonAction (*current_page)[3];
 
-void remote_select_click_handler(ClickRecognizerRef recognizer, void *context) {
-	/* text_layer_set_text(remote_text_layer, "PlayPause"); */
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "PlayPause");
-	send_command(REMOTE_PLAY);
+void remote_gen_click(int row, int col) {
+	RemoteButtonAction act = current_page[row][col];
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "Sending action %s", act.label);
+	if (act.cmd > 0) {
+		send_command(act.cmd);
+	}
 	app_timer_reschedule(timeout_quit_timer, TIMEOUT_QUIT_MS);
 }
 
 void remote_up_click_handler(ClickRecognizerRef recognizer, void *context) {
-	/* text_layer_set_text(remote_text_layer, "Up"); */
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "Up");
-	send_command(REMOTE_UP);
-	app_timer_reschedule(timeout_quit_timer, TIMEOUT_QUIT_MS);
+	remote_gen_click(0,0);
 }
-
+void remote_select_click_handler(ClickRecognizerRef recognizer, void *context) {
+	remote_gen_click(0,1);
+}
 void remote_down_click_handler(ClickRecognizerRef recognizer, void *context) {
-	/* text_layer_set_text(remote_text_layer, "Down"); */
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "Down");
-	send_command(REMOTE_DOWN);
-	app_timer_reschedule(timeout_quit_timer, TIMEOUT_QUIT_MS);
+	remote_gen_click(0,2);
 }
 
-void remote_accel_tap_handler(AccelAxisType axis, int32_t direction) {
-	char *message = "None";
-	switch (axis) {
-		case ACCEL_AXIS_X:
-			message = direction == -1 ? "Left" : "Right";
-			break;
-		case ACCEL_AXIS_Y:
-			message = direction == -1 ? "Down" : "Up";
-			break;
-		case ACCEL_AXIS_Z:
-			message = direction == -1 ? "OK" : "Back";
-			break;
-	}
-	/* text_layer_set_text(remote_text_layer, message); */
-	APP_LOG(APP_LOG_LEVEL_DEBUG, message);
+void remote_up_dbl_handler(ClickRecognizerRef recognizer, void *context) {
+	remote_gen_click(1,0);
+}
+void remote_select_dbl_handler(ClickRecognizerRef recognizer, void *context) {
+	remote_gen_click(1,1);
+}
+void remote_down_dbl_handler(ClickRecognizerRef recognizer, void *context) {
+	remote_gen_click(1,2);
+}
+
+void remote_up_long_handler(ClickRecognizerRef recognizer, void *context) {
+	remote_gen_click(2,0);
+}
+void remote_select_long_handler(ClickRecognizerRef recognizer, void *context) {
+	remote_gen_click(2,1);
+}
+void remote_down_long_handler(ClickRecognizerRef recognizer, void *context) {
+	remote_gen_click(2,2);
 }
 
 void remote_config_provider(void *context) {
+	window_single_click_subscribe(BUTTON_ID_UP, remote_up_click_handler);
 	window_single_click_subscribe(BUTTON_ID_SELECT, remote_select_click_handler);
 	window_single_click_subscribe(BUTTON_ID_DOWN, remote_down_click_handler);
-	window_single_click_subscribe(BUTTON_ID_UP, remote_up_click_handler);
+	
+	window_multi_click_subscribe(BUTTON_ID_UP, 0, 0, 0, false, remote_up_dbl_handler);
+	window_multi_click_subscribe(BUTTON_ID_SELECT, 0, 0, 0, false, remote_select_dbl_handler);
+	window_multi_click_subscribe(BUTTON_ID_DOWN, 0, 0, 0, false, remote_down_dbl_handler);
+
+	window_long_click_subscribe(BUTTON_ID_UP, 0, remote_up_long_handler, NULL);	
+	window_long_click_subscribe(BUTTON_ID_SELECT, 0, remote_select_long_handler, NULL);	
+	window_long_click_subscribe(BUTTON_ID_DOWN, 0, remote_down_long_handler, NULL);	
 }
 
-void remote_init(const RemoteButtonAction pagedef[3][3]) {
+void remote_init(RemoteButtonAction pagedef[3][3]) {
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "in remote_init");
 	remote_window = window_create();
 	current_page = pagedef;
 	app_message_init();
 	
 	window_set_click_config_provider(remote_window, remote_config_provider);
-	/* accel_tap_service_subscribe(&remote_accel_tap_handler); */
 
 	Layer *window_layer = window_get_root_layer(remote_window);
 	
@@ -124,4 +132,5 @@ void remote_deinit(void) {
 	}
 	text_layer_destroy(header_text_layer);
 	window_destroy(remote_window);
+	current_page = NULL;
 }
