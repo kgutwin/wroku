@@ -1,0 +1,27 @@
+{
+    "versionLabel": "1.0",
+    "uuid": "71f75787-79bd-4c79-8dac-359a3454190e",
+    "appKeys": {
+        "command": 0
+    },
+    "longName": "Wroku",
+    "versionCode": 1,
+    "capabilities": [
+        ""
+    ],
+    "shortName": "Wroku",
+    "companyName": "kgutwin",
+    "watchapp": {
+        "watchface": false
+    },
+    "resources": {
+        "media": [
+            {
+                "menuIcon": true,
+                "type": "png",
+                "name": "WROKU_ICON",
+                "file": "images/wroku.png"
+            }
+        ]
+    }
+}
