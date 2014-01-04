@@ -1,7 +1,7 @@
 #include <pebble.h>
 
 Window *remote_window;
-TextLayer *remote_text_layer;
+TextLayer *remote_text_up, *remote_text_center, *remote_text_down;
 
 enum {
 	COMMAND_MESSAGE = 0x0,
@@ -25,8 +25,10 @@ typedef enum {
 	REMOTE_ENTER = 15,
 } wroku_command_t;
 
-void handle_deinit(void) {
-	text_layer_destroy(remote_text_layer);
+void remote_deinit(void) {
+	text_layer_destroy(remote_text_up);
+	text_layer_destroy(remote_text_center);
+	text_layer_destroy(remote_text_down);
 	window_destroy(remote_window);
 }
 
@@ -45,19 +47,19 @@ void send_command(wroku_command_t cmd) {
 }
 
 void remote_select_click_handler(ClickRecognizerRef recognizer, void *context) {
-	text_layer_set_text(remote_text_layer, "PlayPause");
+	/* text_layer_set_text(remote_text_layer, "PlayPause"); */
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "PlayPause");
 	send_command(REMOTE_PLAY);
 }
 
 void remote_up_click_handler(ClickRecognizerRef recognizer, void *context) {
-	text_layer_set_text(remote_text_layer, "Up");
+	/* text_layer_set_text(remote_text_layer, "Up"); */
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "Up");
 	send_command(REMOTE_UP);
 }
 
 void remote_down_click_handler(ClickRecognizerRef recognizer, void *context) {
-	text_layer_set_text(remote_text_layer, "Down");
+	/* text_layer_set_text(remote_text_layer, "Down"); */
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "Down");
 	send_command(REMOTE_DOWN);
 }
@@ -75,7 +77,7 @@ void remote_accel_tap_handler(AccelAxisType axis, int32_t direction) {
 			message = direction == -1 ? "OK" : "Back";
 			break;
 	}
-	text_layer_set_text(remote_text_layer, message);
+	/* text_layer_set_text(remote_text_layer, message); */
 	APP_LOG(APP_LOG_LEVEL_DEBUG, message);
 }
 
@@ -106,7 +108,7 @@ void app_message_init() {
 	app_message_open(64, 64);
 }
 
-void handle_init(void) {
+void remote_init(void) {
 	remote_window = window_create();
 	app_message_init();
 	
@@ -115,16 +117,29 @@ void handle_init(void) {
 
 	Layer *window_layer = window_get_root_layer(remote_window);
 	
-	remote_text_layer = text_layer_create(GRect(10, 10, 144, 20));
-	text_layer_set_text_color(remote_text_layer, GColorBlack);
-	text_layer_set_text(remote_text_layer, "Init");
-	layer_add_child(window_layer, text_layer_get_layer(remote_text_layer));
+	remote_text_up = text_layer_create(GRect(90, 5, 50, 50));
+	text_layer_set_font(remote_text_up, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+	text_layer_set_text_alignment(remote_text_up, GTextAlignmentRight);
+	text_layer_set_text(remote_text_up, "Up");
+	layer_add_child(window_layer, text_layer_get_layer(remote_text_up));
 	
+	remote_text_center = text_layer_create(GRect(90, 60, 50, 50));
+	text_layer_set_font(remote_text_center, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+	text_layer_set_text_alignment(remote_text_center, GTextAlignmentRight);
+	text_layer_set_text(remote_text_center, "Play");
+	layer_add_child(window_layer, text_layer_get_layer(remote_text_center));
+	
+	remote_text_down = text_layer_create(GRect(90, 120, 50, 50));
+	text_layer_set_font(remote_text_down, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+	text_layer_set_text_alignment(remote_text_down, GTextAlignmentRight);
+	text_layer_set_text(remote_text_down, "Down");
+	layer_add_child(window_layer, text_layer_get_layer(remote_text_down));
+
 	window_stack_push(remote_window, true);
 }
 
 int main(void) {
-	handle_init();
+	remote_init();
 	app_event_loop();
-	handle_deinit();
+	remote_deinit();
 }
