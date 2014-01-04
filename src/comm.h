@@ -6,6 +6,8 @@ enum {
 };
 
 typedef enum {
+	WROKU_APPS = -2,
+	WROKU_PLAYBACK = -1,
 	REMOTE_HOME = 1,
 	REMOTE_REV = 2,
 	REMOTE_FWD = 3,

@@ -10,7 +10,7 @@ void timeout_quit_handler(void *data) {
 }
 
 int main(void) {
-	remote_init();
+	remote_init_nav();
 	timeout_quit_timer = app_timer_register(TIMEOUT_QUIT_MS, timeout_quit_handler, NULL);
 	app_event_loop();
 	remote_deinit();
