@@ -3,6 +3,6 @@
 
 extern AppTimer *timeout_quit_timer;
 
-#define TIMEOUT_QUIT_MS 30000
+#define TIMEOUT_QUIT_MS 120000
 
 #endif /* define WROKU_MAIN_H */
