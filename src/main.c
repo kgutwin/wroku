@@ -2,6 +2,9 @@
 
 Window *remote_window;
 TextLayer *remote_text_up, *remote_text_center, *remote_text_down;
+AppTimer *timeout_quit_timer;
+
+#define TIMEOUT_QUIT_MS 30000
 
 enum {
 	COMMAND_MESSAGE = 0x0,
@@ -32,6 +35,10 @@ void remote_deinit(void) {
 	window_destroy(remote_window);
 }
 
+void timeout_quit_handler(void *data) {
+	window_stack_remove(remote_window, true);
+}
+
 void send_command(wroku_command_t cmd) {
 	Tuplet command_tuple = TupletInteger(COMMAND_MESSAGE, cmd);
 	
@@ -50,18 +57,21 @@ void remote_select_click_handler(ClickRecognizerRef recognizer, void *context) {
 	/* text_layer_set_text(remote_text_layer, "PlayPause"); */
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "PlayPause");
 	send_command(REMOTE_PLAY);
+	app_timer_reschedule(timeout_quit_timer, TIMEOUT_QUIT_MS);
 }
 
 void remote_up_click_handler(ClickRecognizerRef recognizer, void *context) {
 	/* text_layer_set_text(remote_text_layer, "Up"); */
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "Up");
 	send_command(REMOTE_UP);
+	app_timer_reschedule(timeout_quit_timer, TIMEOUT_QUIT_MS);
 }
 
 void remote_down_click_handler(ClickRecognizerRef recognizer, void *context) {
 	/* text_layer_set_text(remote_text_layer, "Down"); */
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "Down");
 	send_command(REMOTE_DOWN);
+	app_timer_reschedule(timeout_quit_timer, TIMEOUT_QUIT_MS);
 }
 
 void remote_accel_tap_handler(AccelAxisType axis, int32_t direction) {
@@ -136,6 +146,8 @@ void remote_init(void) {
 	layer_add_child(window_layer, text_layer_get_layer(remote_text_down));
 
 	window_stack_push(remote_window, true);
+	
+	timeout_quit_timer = app_timer_register(TIMEOUT_QUIT_MS, timeout_quit_handler, NULL);
 }
 
 int main(void) {
